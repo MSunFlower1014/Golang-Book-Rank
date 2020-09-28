@@ -80,3 +80,19 @@ func InsertBook(book *Book) bool {
 	fmt.Println(res.LastInsertId())
 	return true
 }
+
+func Count(yearMonth string) bool {
+	tx, err := DB.Begin()
+	if err != nil {
+		fmt.Println("tx fail")
+		return false
+	}
+	count := 0
+	row := tx.QueryRow("select count(id) as count from go_books where YearMonth = ?", yearMonth)
+	err = row.Scan(&count)
+	if err != nil {
+		fmt.Println("查询出错了")
+	}
+
+	return count > 0
+}

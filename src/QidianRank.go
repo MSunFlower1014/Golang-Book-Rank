@@ -16,8 +16,14 @@ import (
 
 func main() {
 	dbUtil.InitDB()
-	for i := 0; i < 5; i++ {
-		saveBookRank(strconv.Itoa(i), "202009")
+	yearMont := "202007"
+	hasSave := dbUtil.Count("202007")
+	if hasSave {
+		fmt.Printf("has saved, yearMonth : %s ", yearMont)
+		return
+	}
+	for i := 1; i <= 5; i++ {
+		saveBookRank(strconv.Itoa(i), yearMont)
 		time.Sleep(time.Duration(2) * time.Second)
 	}
 }
@@ -29,7 +35,7 @@ func saveBookRank(pageNum, month string) {
 	buffer.WriteString("&catId=-1&yearmonth=")
 	buffer.WriteString(month)
 	url := buffer.String()
-	_ = buffer.String()
+	buffer.Reset()
 	resp, err := http.Get(url)
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "fetch: %v\n", err)
