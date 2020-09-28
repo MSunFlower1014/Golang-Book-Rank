@@ -1,17 +1,35 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	dbUtil "github.com/MSunFlower1014/Golang-Book-Rank/src/db"
+	_ "github.com/go-sql-driver/mysql"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func main() {
-	url := "https://m.qidian.com/majax/rank/yuepiaolist?_csrfToken=yOYgIBQMyWxfSQIFmFcanGrSC19FscXSY9qzQXKe&gender=male&pageNum=1&catId=12&yearmonth=202009"
+	dbUtil.InitDB()
+	for i := 0; i < 5; i++ {
+		saveBookRank(strconv.Itoa(i), "202009")
+		time.Sleep(time.Duration(2) * time.Second)
+	}
+}
+
+func saveBookRank(pageNum, month string) {
+	var buffer bytes.Buffer
+	buffer.WriteString("https://m.qidian.com/majax/rank/yuepiaolist?_csrfToken=yOYgIBQMyWxfSQIFmFcanGrSC19FscXSY9qzQXKe&gender=male&pageNum=")
+	buffer.WriteString(pageNum)
+	buffer.WriteString("&catId=-1&yearmonth=")
+	buffer.WriteString(month)
+	url := buffer.String()
+	_ = buffer.String()
 	resp, err := http.Get(url)
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "fetch: %v\n", err)
@@ -43,12 +61,21 @@ func main() {
 	mainData := data["data"].(map[string]interface{})
 
 	records := mainData["records"].([]interface{})
+	now := time.Now()
+	yearMonthDay := time.Now().Format("20060102")
 
 	for _, v := range records {
 		book := v.(map[string]interface{})
 		fmt.Printf(" name : %s , rankNum : %v \n", book["bName"], book["rankNum"])
+		bookStruct := dbUtil.Book{book["bid"].(string), book["bName"].(string),
+			book["bAuth"].(string), book["desc"].(string), book["cat"].(string),
+			int(book["catId"].(float64)), book["bName"].(string), book["rankCnt"].(string),
+			int(book["rankNum"].(float64)), month, yearMonthDay, now}
+		if len(bookStruct.Desc) > 1000 {
+			bookStruct.Desc = bookStruct.Desc[0:1000]
+		}
+		dbUtil.InsertBook(&bookStruct)
 	}
-
 }
 
 /*
