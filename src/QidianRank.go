@@ -16,6 +16,7 @@ import (
 
 func main() {
 	dbUtil.InitDB()
+	defer dbUtil.DB.Close()
 	yearMont := "202007"
 	hasSave := dbUtil.Count("202007")
 	if hasSave {
