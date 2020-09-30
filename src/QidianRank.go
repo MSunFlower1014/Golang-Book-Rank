@@ -17,15 +17,22 @@ import (
 func main() {
 	dbUtil.InitDB()
 	defer dbUtil.DB.Close()
-	yearMont := "202007"
-	hasSave := dbUtil.Count("202007")
-	if hasSave {
-		fmt.Printf("has saved, yearMonth : %s ", yearMont)
-		return
-	}
-	for i := 1; i <= 5; i++ {
-		saveBookRank(strconv.Itoa(i), yearMont)
-		time.Sleep(time.Duration(2) * time.Second)
+	for true {
+		yearMont := time.Now().Format("200601")
+		yearMonthDay := time.Now().Format("20060102")
+		hasSave := dbUtil.Count(yearMonthDay)
+		if hasSave {
+			fmt.Printf("has saved, yearMonth : %s , next day execute\n", yearMont)
+			time.Sleep(time.Duration(24) * time.Hour)
+			continue
+		}
+		for i := 1; i <= 5; i++ {
+			saveBookRank(strconv.Itoa(i), yearMont)
+			time.Sleep(time.Duration(2) * time.Second)
+		}
+
+		fmt.Printf("day : %s , execute end,save books end ,next day execute\n", yearMonthDay)
+		time.Sleep(time.Duration(24) * time.Hour)
 	}
 }
 
@@ -73,7 +80,6 @@ func saveBookRank(pageNum, month string) {
 
 	for _, v := range records {
 		book := v.(map[string]interface{})
-		fmt.Printf(" name : %s , rankNum : %v \n", book["bName"], book["rankNum"])
 		bookStruct := dbUtil.Book{book["bid"].(string), book["bName"].(string),
 			book["bAuth"].(string), book["desc"].(string), book["cat"].(string),
 			int(book["catId"].(float64)), book["bName"].(string), book["rankCnt"].(string),

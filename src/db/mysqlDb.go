@@ -88,7 +88,7 @@ func Count(yearMonth string) bool {
 		return false
 	}
 	count := 0
-	row := tx.QueryRow("select count(id) as count from go_books where YearMonth = ?", yearMonth)
+	row := tx.QueryRow("select count(id) as count from go_books where YearMonthDay = ?", yearMonth)
 	err = row.Scan(&count)
 	if err != nil {
 		fmt.Println("查询出错了")
