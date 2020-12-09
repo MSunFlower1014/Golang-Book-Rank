@@ -11,7 +11,7 @@ import "fmt"
 
 func TestExcel(t *testing.T) {
 	result := make(map[string]map[string]string, 16)
-	wb, err := xlsx.OpenFile("C:\\Users\\mayantao\\Desktop\\2020-12-4全国新冠疫情数据统计表.xlsx")
+	wb, err := xlsx.OpenFile("C:\\Users\\71013\\Desktop\\2020-12-4全国新冠疫情数据统计表.xlsx")
 	if err != nil {
 		panic(err)
 	}
@@ -164,42 +164,56 @@ var headT = strings.Split("id,province,city,area,statistical_time,new_num,total_
 var writeMap = map[string]int{"新增病例": 5, "累积病例": 6, "治愈病例": 9, "新增死亡病例": 10, "累积死亡病例": 11, "疑似病例": 14, "新增疑似病例": 15, "新增治愈人数": 16, "累计接触人数": 17}
 
 func writeSheet(result map[string]map[string]string) {
-	wb, err := xlsx.OpenFile("C:\\Users\\mayantao\\Desktop\\test.xlsx")
-	if err != nil {
-		panic(err)
-	}
+	wb := xlsx.NewFile()
+
 	sh, _ := wb.AddSheet(timeNum)
 	for i := 0; i < 40; i++ {
-		sh.AddRow()
+		row := sh.AddRow()
+		for _, _ = range headerList {
+			row.AddCell()
+		}
 	}
 
 	for i, v := range headerList {
 		cell, _ := sh.Cell(0, i)
-		cell.Value = v
+		cell.SetString(v)
 	}
 	for i, v := range headT {
 		cell, _ := sh.Cell(1, i)
-		cell.Value = v
+		cell.SetString(v)
 	}
 
 	for i, v := range cityList {
 		cell, _ := sh.Cell(2+i, 1)
-		cell.Value = v
+		cell.SetString(v)
 		cell, _ = sh.Cell(2+i, 2)
-		cell.Value = v
+		cell.SetString(v)
 		cell, _ = sh.Cell(2+i, 4)
-		cell.Value = timeNum
+		cell.SetString(timeNum)
 		cell, _ = sh.Cell(2+i, 13)
-		cell.Value = "中国"
+		cell.SetString("中国")
 	}
 
 	for i, _ := range cityList {
 		for k, value := range writeMap {
 			cell, _ := sh.Cell(2+i, value)
-			cell.Value = result[k][cityList[i]]
+			cell.SetString(result[k][cityList[i]])
 		}
 	}
-	wb.Save("C:\\Users\\mayantao\\Desktop\\test1.xlsx")
+
+	sh = wb.Sheet[timeNum]
+	sh.ForEachRow(func(r *xlsx.Row) error {
+		r.ForEachCell(func(c *xlsx.Cell) error {
+			fmt.Print(c.Value)
+			return nil
+		})
+		return nil
+	})
+
+	err := wb.Save("C:\\Users\\71013\\Desktop\\test1.xlsx")
+	if err != nil {
+		fmt.Println("err:", err)
+	}
 }
 
 func cellVisitor(c *xlsx.Cell) error {
