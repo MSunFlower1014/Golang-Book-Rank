@@ -161,11 +161,10 @@ var cityList = []string{"湖北",
 	"全国"}
 var headerList = strings.Split("主键id,省,市,县/区,统计时间,新增病例,累积病例,在治重症病例,危重症病例,治愈病例,新增死亡病例,累积死亡病例,备注,国家,疑似病例,新增疑似病例,新增治愈人数,累计接触人数,新增接触人数", ",")
 var headT = strings.Split("id,province,city,area,statistical_time,new_num,total_num,treatment_num,critical_num,cure_num,new_dead_num,dead_num,remark,country,suspect_num,new_suspect_num,new_cure_num,contact_num,new_contact_num", ",")
-var writeMap = map[string]int{"新增病例": 5, "累积病例": 6, "治愈病例": 9, "新增死亡病例": 10, "累积死亡病例": 11, "疑似病例": 14, "新增疑似病例": 15, "新增治愈人数": 16, "累计接触人数": 17}
+var writeMap = map[string]int{"新增病例": 5, "累计病例": 6, "累计治愈人数": 9, "新增死亡人数": 10, "累计死亡人数": 11, "现有疑似病例": 14, "新增疑似病例": 15, "新增治愈人数": 16, "累计接触": 17}
 
 func writeSheet(result map[string]map[string]string) {
 	wb := xlsx.NewFile()
-
 	sh, _ := wb.AddSheet(timeNum)
 	for i := 0; i < 40; i++ {
 		row := sh.AddRow()
@@ -194,21 +193,31 @@ func writeSheet(result map[string]map[string]string) {
 		cell.SetString("中国")
 	}
 
-	for i, _ := range cityList {
+	for i, v := range cityList {
 		for k, value := range writeMap {
+			temp := v
+			if temp == "全国" && k == "新增病例" {
+				temp = "全国网报"
+			}
+			if temp == "全国" && (k == "累计病例" || k == "新增治愈人数" || k == "累计治愈人数") {
+				temp = "网报全国量"
+			}
+			if temp == "全国" && (k == "新增死亡人数" || k == "累计死亡人数") {
+				temp = "网报全国"
+			}
 			cell, _ := sh.Cell(2+i, value)
-			cell.SetString(result[k][cityList[i]])
+			cell.SetString(result[k][temp])
 		}
 	}
 
-	sh = wb.Sheet[timeNum]
-	sh.ForEachRow(func(r *xlsx.Row) error {
-		r.ForEachCell(func(c *xlsx.Cell) error {
-			fmt.Print(c.Value)
-			return nil
-		})
-		return nil
-	})
+	//sh = wb.Sheet[timeNum]
+	//sh.ForEachRow(func(r *xlsx.Row) error {
+	//	r.ForEachCell(func(c *xlsx.Cell) error {
+	//		fmt.Print(c.Value)
+	//		return nil
+	//	})
+	//	return nil
+	//})
 
 	err := wb.Save("C:\\Users\\71013\\Desktop\\test1.xlsx")
 	if err != nil {
