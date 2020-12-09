@@ -34,7 +34,6 @@ func TestExcel(t *testing.T) {
 			typeDict[cell.Value] = j
 		}
 	}
-	fmt.Println(typeDict)
 	typeHandle(typeDict, sh, result)
 
 	deadSh, ok := wb.Sheet["死亡人数统计"]
@@ -205,6 +204,9 @@ func writeSheet(result map[string]map[string]string) {
 			if temp == "全国" && (k == "新增死亡人数" || k == "累计死亡人数") {
 				temp = "网报全国"
 			}
+			if temp == "青海" {
+				temp = "青海省"
+			}
 			cell, _ := sh.Cell(2+i, value)
 			cell.SetString(result[k][temp])
 		}
@@ -241,7 +243,8 @@ func rowVisitor(r *xlsx.Row) error {
 
 func typeHandle(typeDict map[string]int, sh *xlsx.Sheet, result map[string]map[string]string) {
 	for k, v := range typeDict {
-		result[k] = CumulativeCases(v, sh)
+		caseResult := CumulativeCases(v, sh)
+		result[k] = caseResult
 	}
 }
 
@@ -261,8 +264,6 @@ func CumulativeCases(start int, sh *xlsx.Sheet) map[string]string {
 		return nil
 	}
 	row.ForEachCell(cityHandle)
-	fmt.Println(cityWidth)
-	fmt.Println(cities)
 	cities = cities[2:]
 	timeIndex := 0
 	for i := start; i < sh.MaxRow; i++ {
