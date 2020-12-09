@@ -6,12 +6,19 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 )
 import "fmt"
 
 func TestExcel(t *testing.T) {
+	//44168   2020/12/3
+	var timeNum string = "44168"
+	excelHandle(timeNum)
+}
+
+func excelHandle(timeNum string) {
 	result := make(map[string]map[string]string, 16)
-	wb, err := xlsx.OpenFile("C:\\Users\\71013\\Desktop\\2020-12-4全国新冠疫情数据统计表.xlsx")
+	wb, err := xlsx.OpenFile("D:\\Study\\Go\\Golang-Book-Rank\\src\\excel\\2020-12-4全国新冠疫情数据统计表.xlsx")
 	if err != nil {
 		panic(err)
 	}
@@ -34,7 +41,7 @@ func TestExcel(t *testing.T) {
 			typeDict[cell.Value] = j
 		}
 	}
-	typeHandle(typeDict, sh, result)
+	typeHandle(typeDict, sh, result, timeNum)
 
 	deadSh, ok := wb.Sheet["死亡人数统计"]
 	if !ok {
@@ -120,7 +127,7 @@ func TestExcel(t *testing.T) {
 		fmt.Println(k, v)
 	}
 
-	writeSheet(result)
+	writeSheet(result, timeNum)
 }
 
 var cityList = []string{"湖北",
@@ -162,9 +169,9 @@ var headerList = strings.Split("主键id,省,市,县/区,统计时间,新增病�
 var headT = strings.Split("id,province,city,area,statistical_time,new_num,total_num,treatment_num,critical_num,cure_num,new_dead_num,dead_num,remark,country,suspect_num,new_suspect_num,new_cure_num,contact_num,new_contact_num", ",")
 var writeMap = map[string]int{"新增病例": 5, "累计病例": 6, "累计治愈人数": 9, "新增死亡人数": 10, "累计死亡人数": 11, "现有疑似病例": 14, "新增疑似病例": 15, "新增治愈人数": 16, "累计接触": 17}
 
-func writeSheet(result map[string]map[string]string) {
+func writeSheet(result map[string]map[string]string, timeNum string) {
 	wb := xlsx.NewFile()
-	sh, _ := wb.AddSheet(timeNum)
+	sh, _ := wb.AddSheet(timeFormat)
 	for i := 0; i < 40; i++ {
 		row := sh.AddRow()
 		for _, _ = range headerList {
@@ -187,7 +194,7 @@ func writeSheet(result map[string]map[string]string) {
 		cell, _ = sh.Cell(2+i, 2)
 		cell.SetString(v)
 		cell, _ = sh.Cell(2+i, 4)
-		cell.SetString(timeNum)
+		cell.SetString(timeFormat2)
 		cell, _ = sh.Cell(2+i, 13)
 		cell.SetString("中国")
 	}
@@ -221,7 +228,7 @@ func writeSheet(result map[string]map[string]string) {
 	//	return nil
 	//})
 
-	err := wb.Save("C:\\Users\\71013\\Desktop\\test1.xlsx")
+	err := wb.Save("C:\\Users\\mayantao\\Desktop\\test1.xlsx")
 	if err != nil {
 		fmt.Println("err:", err)
 	}
@@ -241,16 +248,18 @@ func rowVisitor(r *xlsx.Row) error {
 	return r.ForEachCell(cellVisitor)
 }
 
-func typeHandle(typeDict map[string]int, sh *xlsx.Sheet, result map[string]map[string]string) {
+func typeHandle(typeDict map[string]int, sh *xlsx.Sheet, result map[string]map[string]string, timeNum string) {
 	for k, v := range typeDict {
-		caseResult := CumulativeCases(v, sh)
+		caseResult := CumulativeCases(v, sh, timeNum)
 		result[k] = caseResult
 	}
 }
 
-var timeNum string = "44168"
+var timeFormat string
+var timeTime time.Time
+var timeFormat2 string
 
-func CumulativeCases(start int, sh *xlsx.Sheet) map[string]string {
+func CumulativeCases(start int, sh *xlsx.Sheet, timeNum string) map[string]string {
 	cityWidth := make(map[string]int)
 	cityIndex := make(map[string]int)
 	var cities []string = []string{}
@@ -270,6 +279,10 @@ func CumulativeCases(start int, sh *xlsx.Sheet) map[string]string {
 		cell, _ := sh.Cell(i, 0)
 		if cell.Value == timeNum {
 			timeIndex = i
+			timeTime, _ = cell.GetTime(false)
+
+			timeFormat = timeTime.Format("01月02日")
+			timeFormat2 = timeTime.Format("2006/01/02")
 			break
 		}
 	}
