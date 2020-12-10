@@ -11,17 +11,29 @@ import (
 import "fmt"
 
 func TestExcel(t *testing.T) {
-	//44168   2020/12/3
-	var timeNum string = "44168"
-	excelHandle(timeNum)
-}
-
-func excelHandle(timeNum string) {
-	result := make(map[string]map[string]string, 16)
-	wb, err := xlsx.OpenFile("D:\\Study\\Go\\Golang-Book-Rank\\src\\excel\\2020-12-4全国新冠疫情数据统计表.xlsx")
+	//44168   2020/12/3    15
+	var timeNum int = 44168
+	wb, err := xlsx.OpenFile("C:\\Users\\71013\\Desktop\\冠状病毒省份数据表2020.11.18.xlsx")
 	if err != nil {
 		panic(err)
 	}
+	allWb, err := xlsx.OpenFile("D:\\Study\\Golang\\Golang-Book-Rank\\src\\excel\\2020-12-4全国新冠疫情数据统计表.xlsx")
+	if err != nil {
+		panic(err)
+	}
+	for i := timeNum - 15; i <= timeNum; i++ {
+		timeString := strconv.Itoa(i)
+		excelHandle(wb, allWb, timeString)
+	}
+
+	err = wb.Save("C:\\Users\\71013\\Desktop\\test1.xlsx")
+	if err != nil {
+		panic(err)
+	}
+}
+
+func excelHandle(resultWb, wb *xlsx.File, timeNum string) {
+	result := make(map[string]map[string]string, 16)
 	// wb now contains a reference to the workbook
 	// show all the sheets in the workbook
 	fmt.Println("Sheets in this file:")
@@ -127,7 +139,7 @@ func excelHandle(timeNum string) {
 		fmt.Println(k, v)
 	}
 
-	writeSheet(result, timeNum)
+	writeSheet(resultWb, result, timeNum)
 }
 
 var cityList = []string{"湖北",
@@ -169,9 +181,11 @@ var headerList = strings.Split("主键id,省,市,县/区,统计时间,新增病�
 var headT = strings.Split("id,province,city,area,statistical_time,new_num,total_num,treatment_num,critical_num,cure_num,new_dead_num,dead_num,remark,country,suspect_num,new_suspect_num,new_cure_num,contact_num,new_contact_num", ",")
 var writeMap = map[string]int{"新增病例": 5, "累计病例": 6, "累计治愈人数": 9, "新增死亡人数": 10, "累计死亡人数": 11, "现有疑似病例": 14, "新增疑似病例": 15, "新增治愈人数": 16, "累计接触": 17}
 
-func writeSheet(result map[string]map[string]string, timeNum string) {
-	wb := xlsx.NewFile()
-	sh, _ := wb.AddSheet(timeFormat)
+func writeSheet(wb *xlsx.File, result map[string]map[string]string, timeNum string) {
+	sh, err := wb.AddSheet(timeFormat)
+	if err != nil {
+		fmt.Println(err)
+	}
 	for i := 0; i < 40; i++ {
 		row := sh.AddRow()
 		for _, _ = range headerList {
@@ -227,11 +241,6 @@ func writeSheet(result map[string]map[string]string, timeNum string) {
 	//	})
 	//	return nil
 	//})
-
-	err := wb.Save("C:\\Users\\mayantao\\Desktop\\test1.xlsx")
-	if err != nil {
-		fmt.Println("err:", err)
-	}
 }
 
 func cellVisitor(c *xlsx.Cell) error {
